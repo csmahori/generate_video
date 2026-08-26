@@ -47,7 +47,7 @@ def process_input(input_data, temp_dir, output_filename, input_type):
     else:
         raise Exception(f"지원하지 않는 입력 타입: {input_type}")
 
-        
+
 def download_file_from_url(url, output_path):
     """URL에서 파일을 다운로드하는 함수"""
     try:
@@ -55,7 +55,7 @@ def download_file_from_url(url, output_path):
         result = subprocess.run([
             'wget', '-O', output_path, '--no-verbose', url
         ], capture_output=True, text=True)
-        
+
         if result.returncode == 0:
             logger.info(f"✅ URL에서 파일을 성공적으로 다운로드했습니다: {url} -> {output_path}")
             return output_path
@@ -75,21 +75,21 @@ def save_base64_to_file(base64_data, temp_dir, output_filename):
     try:
         # Base64 문자열 디코딩
         decoded_data = base64.b64decode(base64_data)
-        
+
         # 디렉토리가 존재하지 않으면 생성
         os.makedirs(temp_dir, exist_ok=True)
-        
+
         # 파일로 저장
         file_path = os.path.abspath(os.path.join(temp_dir, output_filename))
         with open(file_path, 'wb') as f:
             f.write(decoded_data)
-        
+
         logger.info(f"✅ Base64 입력을 '{file_path}' 파일로 저장했습니다.")
         return file_path
     except (binascii.Error, ValueError) as e:
         logger.error(f"❌ Base64 디코딩 실패: {e}")
         raise Exception(f"Base64 디코딩 실패: {e}")
-    
+
 def queue_prompt(prompt):
     url = f"http://{server_address}:8188/prompt"
     logger.info(f"Queueing prompt to: {url}")
@@ -113,6 +113,11 @@ def get_history(prompt_id):
         return json.loads(response.read())
 
 def get_videos(ws, prompt):
+    # PATCHED (2026-08-26, Nachiketa aur Yamraj pipeline): return the local
+    # fullpath to each rendered video instead of eagerly base64-encoding it
+    # here. The encode-vs-upload decision is now made once in handler(), so
+    # a video is never base64'd AND uploaded -- just whichever path is
+    # actually needed.
     prompt_id = queue_prompt(prompt)['prompt_id']
     output_videos = {}
     while True:
@@ -132,10 +137,7 @@ def get_videos(ws, prompt):
         videos_output = []
         if 'gifs' in node_output:
             for video in node_output['gifs']:
-                # fullpath를 이용하여 직접 파일을 읽고 base64로 인코딩
-                with open(video['fullpath'], 'rb') as f:
-                    video_data = base64.b64encode(f.read()).decode('utf-8')
-                videos_output.append(video_data)
+                videos_output.append(video['fullpath'])
         output_videos[node_id] = videos_output
 
     return output_videos
@@ -159,21 +161,21 @@ def get_next_available_node_id(prompt, start_id=1000):
 def count_user_loras(lora_pairs):
     """
     사용자 LoRA 개수를 계산하는 함수 (lightx2v_4steps_lora 제외)
-    
+
     Args:
         lora_pairs: LoRA 페어 리스트
-    
+
     Returns:
         lightx2v_4steps_lora를 제외한 LoRA 개수
     """
     if not lora_pairs:
         return 0
-    
+
     count = 0
     for lora_pair in lora_pairs:
         high = lora_pair.get("high", "")
         low = lora_pair.get("low", "")
-        
+
         # lightx2v_4steps_lora가 아닌 경우만 카운트
         if high and "lightx2v_4steps_lora" not in high:
             count += 1
@@ -181,43 +183,43 @@ def count_user_loras(lora_pairs):
             count += 1
         elif high and low and "lightx2v_4steps_lora" not in high and "lightx2v_4steps_lora" not in low:
             count += 1
-    
+
     return count
 
 def filter_user_loras(lora_pairs):
     """
     lightx2v_4steps_lora를 제외한 사용자 LoRA만 필터링
-    
+
     Args:
         lora_pairs: LoRA 페어 리스트
-    
+
     Returns:
         lightx2v_4steps_lora를 제외한 LoRA 페어 리스트
     """
     if not lora_pairs:
         return []
-    
+
     filtered = []
     for lora_pair in lora_pairs:
         high = lora_pair.get("high", "")
         low = lora_pair.get("low", "")
-        
+
         # lightx2v_4steps_lora가 포함된 경우 제외
         if high and "lightx2v_4steps_lora" in high:
             continue
         if low and "lightx2v_4steps_lora" in low:
             continue
-        
+
         filtered.append(lora_pair)
-    
+
     return filtered
 
 def apply_loras_to_workflow(prompt, lora_pairs, is_flf2v, workflow_file):
     """
     워크플로우에 LoRA 설정을 적용하는 함수
-    각 워크플로우 파일에는 이미 LoRA 노드가 설정되어 있으므로, 
+    각 워크플로우 파일에는 이미 LoRA 노드가 설정되어 있으므로,
     해당 노드의 lora_name과 strength_model만 업데이트
-    
+
     Args:
         prompt: 워크플로우 딕셔너리
         lora_pairs: LoRA 페어 리스트 (lightx2v 제외)
@@ -226,9 +228,9 @@ def apply_loras_to_workflow(prompt, lora_pairs, is_flf2v, workflow_file):
     """
     if not lora_pairs:
         return
-    
+
     # 각 workflow 파일별 사용자 LoRA 노드 ID 매핑 (HIGH, LOW 순서)
-    # 체인 구조: 
+    # 체인 구조:
     # HIGH: UNETLoader(230) -> lightx2v(283) -> 사용자LoRA(282) -> 사용자LoRA(339) -> 사용자LoRA(340) -> 사용자LoRA(341) -> TorchCompile(391)
     # LOW: UNETLoader(235) -> lightx2v(284) -> 사용자LoRA(336) -> 사용자LoRA(285) -> 사용자LoRA(286) -> 사용자LoRA(337) -> TorchCompile(390)
     lora_node_mapping = {
@@ -257,29 +259,29 @@ def apply_loras_to_workflow(prompt, lora_pairs, is_flf2v, workflow_file):
             "low": []
         }
     }
-    
+
     # workflow 파일명에서 매핑 찾기
     workflow_key = None
     for key in lora_node_mapping.keys():
         if key in workflow_file:
             workflow_key = key
             break
-    
+
     if workflow_key is None:
         logger.warning(f"워크플로우 파일 {workflow_file}에 대한 LoRA 노드 매핑을 찾을 수 없습니다.")
         return
-    
+
     high_user_nodes = lora_node_mapping[workflow_key]["high"]
     low_user_nodes = lora_node_mapping[workflow_key]["low"]
-    
+
     logger.info(f"워크플로우: {workflow_key}")
     logger.info(f"HIGH 사용자 LoRA 노드: {high_user_nodes}")
     logger.info(f"LOW 사용자 LoRA 노드: {low_user_nodes}")
-    
+
     if len(high_user_nodes) < len(lora_pairs) or len(low_user_nodes) < len(lora_pairs):
         logger.warning(f"워크플로우에 사용자 LoRA 노드가 부족합니다. 필요: HIGH={len(lora_pairs)}, LOW={len(lora_pairs)}, 발견: HIGH={len(high_user_nodes)}, LOW={len(low_user_nodes)}")
         return
-    
+
     # 각 lora_pair에 대해 HIGH와 LOW를 적용
     for i, lora_pair in enumerate(lora_pairs):
         # HIGH LoRA 적용
@@ -288,7 +290,7 @@ def apply_loras_to_workflow(prompt, lora_pairs, is_flf2v, workflow_file):
             prompt[high_node_id]["inputs"]["lora_name"] = lora_pair["high"]
             prompt[high_node_id]["inputs"]["strength_model"] = lora_pair.get("high_weight", 1.0)
             logger.info(f"✅ HIGH LoRA {i+1} 적용: {lora_pair['high']} (강도: {lora_pair.get('high_weight', 1.0)}) -> 노드 {high_node_id}")
-        
+
         # LOW LoRA 적용
         if i < len(low_user_nodes) and lora_pair.get("low"):
             low_node_id = low_user_nodes[i]
@@ -349,17 +351,17 @@ def handler(job):
         end_image_path_local = process_input(job_input["end_image_url"], task_id, "end_image.jpg", "url")
     elif "end_image_base64" in job_input:
         end_image_path_local = process_input(job_input["end_image_base64"], task_id, "end_image.jpg", "base64")
-    
+
     # 워크플로우 파일 선택 (end_image_*가 있으면 FLF2V 워크플로 사용)
     is_flf2v = end_image_path_local is not None
-    
+
     # LoRA 개수 계산 (lightx2v_4steps_lora 제외)
     lora_pairs = job_input.get("lora_pairs", [])
     user_lora_pairs = filter_user_loras(lora_pairs)
     lora_count = count_user_loras(lora_pairs)
-    
+
     logger.info(f"사용자 LoRA 개수 (lightx2v 제외): {lora_count}")
-    
+
     # LoRA 개수에 따라 워크플로우 파일 선택
     if is_flf2v:
         # FLF2V 워크플로우는 현재 하나만 있음
@@ -382,13 +384,13 @@ def handler(job):
                 user_lora_pairs = user_lora_pairs[:4]
         else:
             workflow_file = "workflow/wan22_nolora.json"
-        
+
         logger.info(f"Using single image workflow: {workflow_file} (LoRA 개수: {lora_count})")
-    
+
     prompt = load_workflow(workflow_file)
-    
+
     length = job_input.get("length", 81)
-    
+
     # 해상도(폭/높이) 16배수 보정
     original_width = job_input.get("width", 480)
     original_height = job_input.get("height", 720)
@@ -413,23 +415,23 @@ def handler(job):
     prompt["848"]["inputs"]["value"] = adjusted_height
     # Length: 노드 846
     prompt["846"]["inputs"]["value"] = length
-    
+
     # FLF2V 전용 설정
     if is_flf2v:
         # End 이미지: 노드 483
         prompt["483"]["inputs"]["image"] = end_image_path_local
-    
+
     # LoRA 설정 적용 (lightx2v 제외한 사용자 LoRA만)
     if user_lora_pairs:
         apply_loras_to_workflow(prompt, user_lora_pairs, is_flf2v, workflow_file)
 
     ws_url = f"ws://{server_address}:8188/ws?clientId={client_id}"
     logger.info(f"Connecting to WebSocket: {ws_url}")
-    
+
     # 먼저 HTTP 연결이 가능한지 확인
     http_url = f"http://{server_address}:8188/"
     logger.info(f"Checking HTTP connection to: {http_url}")
-    
+
     # HTTP 연결 확인 (최대 1분)
     max_http_attempts = 180
     for http_attempt in range(max_http_attempts):
@@ -443,7 +445,7 @@ def handler(job):
             if http_attempt == max_http_attempts - 1:
                 raise Exception("ComfyUI 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인하세요.")
             time.sleep(1)
-    
+
     ws = websocket.WebSocket()
     # 웹소켓 연결 시도 (최대 3분)
     max_attempts = int(180/5)  # 3분 (1초에 한 번씩 시도)
@@ -461,11 +463,37 @@ def handler(job):
     videos = get_videos(ws, prompt)
     ws.close()
 
-    # 이미지가 없는 경우 처리
+    # PATCHED (2026-08-26, Nachiketa aur Yamraj pipeline): large (e.g. 720p+)
+    # outputs base64-encoded inline can exceed RunPod's serverless response
+    # payload ceiling (~10-20MB), which made results impossible to retrieve
+    # at 1280x720 even though generation succeeded. When bucket credentials
+    # are configured on the endpoint (BUCKET_ENDPOINT_URL / BUCKET_ACCESS_KEY_ID
+    # / BUCKET_SECRET_ACCESS_KEY env vars -- standard runpod-python rp_upload
+    # convention), upload the finished video to that S3-compatible bucket and
+    # return a small presigned URL instead of the raw bytes. Falls back to the
+    # original inline-base64 behavior when no bucket is configured, so this
+    # stays fully backward compatible with the known-good <=832x480 recipe.
     for node_id in videos:
         if videos[node_id]:
-            return {"video": videos[node_id][0]}
-    
+            video_path = videos[node_id][0]
+            bucket_configured = bool(os.getenv("BUCKET_ENDPOINT_URL"))
+
+            if bucket_configured:
+                try:
+                    file_name = f"{task_id}_{os.path.basename(video_path)}"
+                    video_url = rp_upload.upload_file_to_bucket(
+                        file_name=file_name,
+                        file_location=video_path,
+                    )
+                    logger.info(f"✅ 버킷 업로드 성공: {video_url}")
+                    return {"video_url": video_url}
+                except Exception as e:
+                    logger.error(f"❌ 버킷 업로드 실패, base64로 대체합니다: {e}")
+
+            with open(video_path, 'rb') as f:
+                video_data = base64.b64encode(f.read()).decode('utf-8')
+            return {"video": video_data}
+
     return {"error": "비디오를를 찾을 수 없습니다."}
 
 runpod.serverless.start({"handler": handler})
