@@ -1,36 +1,40 @@
-# Use specific version of nvidia cuda image
-# FROM wlsdml1114/my-comfy-models:v1 as model_provider
-FROM wlsdml1114/multitalk-base:1.8 as runtime
+# Reproducible Wan 2.2 worker build for Nachiketa aur Yamraj.
+FROM wlsdml1114/multitalk-base:1.8 AS runtime
 
-RUN pip install -U "huggingface_hub[hf_transfer]"
-RUN pip install runpod websocket-client
+ARG COMFYUI_COMMIT=b133e48368d0f52bb014f0dd7ae1adb7403d515b
+ARG MANAGER_COMMIT=f39cbd56fecae0b27a446c0cd450cd591f3a8bea
+ARG KJNODES_COMMIT=3f20054214fec9f9234fd3841ae6f1e4287948f6
+ARG VFI_COMMIT=26545cc2dd95bc3d27f056016300673bdeee78f5
+ARG VHS_COMMIT=115de7a9d9e34410cffb9ecfd268e993b11a50fb
+
+RUN pip install --no-cache-dir runpod==1.7.13 websocket-client==1.8.0
 
 WORKDIR /
 
-RUN git clone https://github.com/comfyanonymous/ComfyUI.git && \
+RUN git clone --filter=blob:none --no-checkout https://github.com/Comfy-Org/ComfyUI.git /ComfyUI && \
     cd /ComfyUI && \
-    pip install -r requirements.txt
+    git checkout "${COMFYUI_COMMIT}" && \
+    pip install --no-cache-dir -r requirements.txt
 
-RUN cd /ComfyUI/custom_nodes && \
-    git clone https://github.com/Comfy-Org/ComfyUI-Manager.git && \
-    cd ComfyUI-Manager && \
-    pip install -r requirements.txt
+RUN git clone --filter=blob:none --no-checkout https://github.com/Comfy-Org/ComfyUI-Manager.git /ComfyUI/custom_nodes/ComfyUI-Manager && \
+    cd /ComfyUI/custom_nodes/ComfyUI-Manager && \
+    git checkout "${MANAGER_COMMIT}" && \
+    pip install --no-cache-dir -r requirements.txt
 
-RUN cd /ComfyUI/custom_nodes && \
-    git clone https://github.com/kijai/ComfyUI-KJNodes && \
-    cd ComfyUI-KJNodes && \
-    pip install -r requirements.txt
+RUN git clone --filter=blob:none --no-checkout https://github.com/kijai/ComfyUI-KJNodes.git /ComfyUI/custom_nodes/ComfyUI-KJNodes && \
+    cd /ComfyUI/custom_nodes/ComfyUI-KJNodes && \
+    git checkout "${KJNODES_COMMIT}" && \
+    pip install --no-cache-dir -r requirements.txt
 
-RUN cd /ComfyUI/custom_nodes && \
-    git clone https://github.com/Fannovel16/ComfyUI-Frame-Interpolation.git
-
-RUN cd /ComfyUI/custom_nodes/ComfyUI-Frame-Interpolation && \
+RUN git clone --filter=blob:none --no-checkout https://github.com/Fannovel16/ComfyUI-Frame-Interpolation.git /ComfyUI/custom_nodes/ComfyUI-Frame-Interpolation && \
+    cd /ComfyUI/custom_nodes/ComfyUI-Frame-Interpolation && \
+    git checkout "${VFI_COMMIT}" && \
     python install.py
-    
-RUN cd /ComfyUI/custom_nodes && \
-    git clone https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite && \
-    cd ComfyUI-VideoHelperSuite && \
-    pip install -r requirements.txt
+
+RUN git clone --filter=blob:none --no-checkout https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite.git /ComfyUI/custom_nodes/ComfyUI-VideoHelperSuite && \
+    cd /ComfyUI/custom_nodes/ComfyUI-VideoHelperSuite && \
+    git checkout "${VHS_COMMIT}" && \
+    pip install --no-cache-dir -r requirements.txt
 
 RUN wget -q https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors -O /ComfyUI/models/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors
 RUN wget -q https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/vae/wan_2.1_vae.safetensors -O /ComfyUI/models/vae/wan_2.1_vae.safetensors
@@ -39,8 +43,8 @@ RUN wget -q https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/
 RUN wget -q https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/loras/wan2.2_i2v_lightx2v_4steps_lora_v1_low_noise.safetensors -O /ComfyUI/models/loras/wan2.2_i2v_lightx2v_4steps_lora_v1_low_noise.safetensors
 RUN wget -q https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/diffusion_models/wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors -O /ComfyUI/models/diffusion_models/wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors
 
-RUN mkdir -p /ComfyUI/custom_nodes/ComfyUI-Frame-Interpolation/ckpts/rife && wget https://huggingface.co/hfmaster/models-moved/resolve/cab6dcee2fbb05e190dbb8f536fbdaa489031a14/rife/rife49.pth -O /ComfyUI/custom_nodes/ComfyUI-Frame-Interpolation/ckpts/rife/rife49.pth
-
+RUN mkdir -p /ComfyUI/custom_nodes/ComfyUI-Frame-Interpolation/ckpts/rife && \
+    wget -q https://huggingface.co/hfmaster/models-moved/resolve/cab6dcee2fbb05e190dbb8f536fbdaa489031a14/rife/rife49.pth -O /ComfyUI/custom_nodes/ComfyUI-Frame-Interpolation/ckpts/rife/rife49.pth
 
 COPY . .
 RUN mkdir -p /ComfyUI/user/default/ComfyUI-Manager
