@@ -437,7 +437,10 @@
       "frames": [
         "323",
         0
-      ]
+      ],
+      "dtype": "float32",
+      "torch_compile": false,
+      "batch_size": 1
     },
     "class_type": "RIFE VFI",
     "_meta": {
