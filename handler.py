@@ -8,6 +8,7 @@ import uuid
 import logging
 import urllib.request
 import urllib.parse
+import urllib.error
 import binascii # Base64 에러 처리를 위해 import
 import subprocess
 import time
@@ -96,7 +97,12 @@ def queue_prompt(prompt):
     p = {"prompt": prompt, "client_id": client_id}
     data = json.dumps(p).encode('utf-8')
     req = urllib.request.Request(url, data=data)
-    return json.loads(urllib.request.urlopen(req).read())
+    try:
+        return json.loads(urllib.request.urlopen(req).read())
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode("utf-8", errors="replace")
+        logger.error(f"ComfyUI workflow validation failed: {error_body}")
+        raise Exception(f"ComfyUI workflow validation failed: {error_body}") from e
 
 def get_image(filename, subfolder, folder_type):
     url = f"http://{server_address}:8188/view"
@@ -301,8 +307,28 @@ def apply_loras_to_workflow(prompt, lora_pairs, is_flf2v, workflow_file):
 def handler(job):
     job_input = job.get("input", {})
 
-    logger.info(f"Received job input: {job_input}")
+    logger.info(f"Received job input keys: {sorted(job_input.keys())}")
     task_id = f"task_{uuid.uuid4()}"
+
+    # Verify R2 without invoking the video model.
+    if job_input.get("action") == "test_bucket_upload":
+        bucket_name = os.getenv("BUCKET_NAME")
+        if not (os.getenv("BUCKET_ENDPOINT_URL") and bucket_name):
+            return {"error": "Bucket storage is not fully configured."}
+        test_path = f"/tmp/{task_id}.txt"
+        with open(test_path, "w", encoding="utf-8") as test_file:
+            test_file.write("RunPod R2 upload test")
+        try:
+            test_url = rp_upload.upload_file_to_bucket(
+                file_name=f"{task_id}.txt",
+                file_location=test_path,
+                bucket_name=bucket_name,
+                prefix="diagnostics",
+            )
+            return {"ok": True, "file_url": test_url}
+        except Exception as e:
+            logger.exception("Bucket diagnostic upload failed")
+            return {"error": f"Bucket diagnostic upload failed: {e}"}
 
     # 이미지 입력 처리 (image, image_path, image_url, image_base64 중 하나만 사용)
     image_path = None
@@ -387,7 +413,17 @@ def handler(job):
 
         logger.info(f"Using single image workflow: {workflow_file} (LoRA 개수: {lora_count})")
 
-    prompt = load_workflow(workflow_file)
+    workflow_override = job_input.get("workflow")
+    if workflow_override is None:
+        prompt = load_workflow(workflow_file)
+    elif isinstance(workflow_override, dict):
+        prompt = json.loads(json.dumps(workflow_override))
+        logger.info("Using workflow supplied with this request")
+    elif isinstance(workflow_override, str):
+        prompt = json.loads(workflow_override)
+        logger.info("Using JSON workflow supplied with this request")
+    else:
+        raise Exception("workflow must be a JSON object or JSON string")
 
     length = job_input.get("length", 81)
 
@@ -484,11 +520,15 @@ def handler(job):
                     video_url = rp_upload.upload_file_to_bucket(
                         file_name=file_name,
                         file_location=video_path,
+                        bucket_name=os.getenv("BUCKET_NAME"),
+                        prefix="videos",
                     )
-                    logger.info(f"✅ 버킷 업로드 성공: {video_url}")
+                    logger.info(f"Bucket upload succeeded: {video_url}")
                     return {"video_url": video_url}
                 except Exception as e:
-                    logger.error(f"❌ 버킷 업로드 실패, base64로 대체합니다: {e}")
+                    logger.exception("Bucket upload failed")
+                    if not job_input.get("allow_inline_fallback", False):
+                        return {"error": f"Bucket upload failed: {e}"}
 
             with open(video_path, 'rb') as f:
                 video_data = base64.b64encode(f.read()).decode('utf-8')
