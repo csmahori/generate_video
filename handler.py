@@ -96,7 +96,12 @@ def queue_prompt(prompt):
     p = {"prompt": prompt, "client_id": client_id}
     data = json.dumps(p).encode('utf-8')
     req = urllib.request.Request(url, data=data)
-    return json.loads(urllib.request.urlopen(req).read())
+    try:
+        return json.loads(urllib.request.urlopen(req).read())
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode("utf-8", errors="replace")
+        logger.error(f"ComfyUI workflow validation failed: {error_body}")
+        raise Exception(f"ComfyUI workflow validation failed: {error_body}") from e
 
 def get_image(filename, subfolder, folder_type):
     url = f"http://{server_address}:8188/view"
