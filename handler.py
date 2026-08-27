@@ -11,6 +11,7 @@ import urllib.parse
 import urllib.error
 import binascii # Base64 에러 처리를 위해 import
 import subprocess
+import shutil
 import time
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
@@ -90,6 +91,27 @@ def save_base64_to_file(base64_data, temp_dir, output_filename):
     except (binascii.Error, ValueError) as e:
         logger.error(f"❌ Base64 디코딩 실패: {e}")
         raise Exception(f"Base64 디코딩 실패: {e}")
+
+def stage_image_for_comfyui(source_path, task_id, filename):
+    """Copy an image into ComfyUI input and return its safe relative filename."""
+    input_root = os.path.abspath("/ComfyUI/input")
+    source_abs = os.path.abspath(source_path)
+
+    try:
+        already_staged = os.path.commonpath([source_abs, input_root]) == input_root
+    except ValueError:
+        already_staged = False
+
+    if already_staged:
+        relative_path = os.path.relpath(source_abs, input_root)
+    else:
+        relative_path = os.path.join(task_id, filename)
+        destination = os.path.join(input_root, relative_path)
+        os.makedirs(os.path.dirname(destination), exist_ok=True)
+        shutil.copy2(source_abs, destination)
+        logger.info(f"Staged image for ComfyUI: {source_abs} -> {destination}")
+
+    return relative_path.replace(os.sep, "/")
 
 def queue_prompt(prompt):
     url = f"http://{server_address}:8188/prompt"
@@ -356,6 +378,8 @@ def handler(job):
         image_path = "/example_image.png"
         logger.info("기본 이미지 파일을 사용합니다: /example_image.png")
 
+    image_path = stage_image_for_comfyui(image_path, task_id, "input_image.jpg")
+
     # 엔드 이미지 입력 처리 (end_image, end_image_path, end_image_url, end_image_base64 중 하나만 사용)
     end_image_path_local = None
     if "end_image" in job_input:
@@ -377,6 +401,9 @@ def handler(job):
         end_image_path_local = process_input(job_input["end_image_url"], task_id, "end_image.jpg", "url")
     elif "end_image_base64" in job_input:
         end_image_path_local = process_input(job_input["end_image_base64"], task_id, "end_image.jpg", "base64")
+
+    if end_image_path_local:
+        end_image_path_local = stage_image_for_comfyui(end_image_path_local, task_id, "end_image.jpg")
 
     # 워크플로우 파일 선택 (end_image_*가 있으면 FLF2V 워크플로 사용)
     is_flf2v = end_image_path_local is not None
