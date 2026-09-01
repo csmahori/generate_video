@@ -98,28 +98,6 @@
       "title": "\uc774\ubbf8\uc9c0 \ub85c\ub4dc"
     }
   },
-  "277": {
-    "inputs": {
-      "frame_rate": 32,
-      "loop_count": 0,
-      "filename_prefix": "25-12-03/wan/25-12-03-FASTWAN",
-      "format": "video/h264-mp4",
-      "pix_fmt": "yuv420p",
-      "crf": 15,
-      "save_metadata": true,
-      "trim_to_audio": true,
-      "pingpong": false,
-      "save_output": true,
-      "images": [
-        "902",
-        0
-      ]
-    },
-    "class_type": "VHS_VideoCombine",
-    "_meta": {
-      "title": "Video Combine \ud83c\udfa5\ud83c\udd65\ud83c\udd57\ud83c\udd62"
-    }
-  },
   "283": {
     "inputs": {
       "lora_name": "wan2.2_i2v_lightx2v_4steps_lora_v1_high_noise.safetensors",
@@ -747,45 +725,17 @@
       "title": "Scale Factor"
     }
   },
-  "900": {
+  "960": {
     "inputs": {
-      "model_name": "4x-UltraSharp.pth"
-    },
-    "class_type": "UpscaleModelLoader",
-    "_meta": {
-      "title": "Load Upscale Model - Final"
-    }
-  },
-  "901": {
-    "inputs": {
-      "upscale_model": [
-        "900",
-        0
-      ],
-      "image": [
+      "images": [
         "482",
         0
-      ]
+      ],
+      "filename_prefix": "stage1_frames/PLACEHOLDER/frame"
     },
-    "class_type": "ImageUpscaleWithModel",
+    "class_type": "SaveImage",
     "_meta": {
-      "title": "Upscale Image (Model) - Final"
-    }
-  },
-  "902": {
-    "inputs": {
-      "upscale_method": "lanczos",
-      "width": 1920,
-      "height": 1080,
-      "crop": "center",
-      "image": [
-        "901",
-        0
-      ]
-    },
-    "class_type": "ImageScale",
-    "_meta": {
-      "title": "Resize To Delivery Resolution - Final"
+      "title": "Save Stage1 Frames (pre-upscale)"
     }
   }
 }

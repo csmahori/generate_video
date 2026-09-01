@@ -1,0 +1,56 @@
+{
+  "1": {
+    "inputs": {
+      "directory": "PLACEHOLDER_DIR",
+      "image_load_cap": 20,
+      "skip_first_images": 0,
+      "select_every_nth": 1
+    },
+    "class_type": "VHS_LoadImagesPath",
+    "_meta": {
+      "title": "Load Stage1 Frame Batch"
+    }
+  },
+  "2": {
+    "inputs": {
+      "model_name": "4x-UltraSharp.pth"
+    },
+    "class_type": "UpscaleModelLoader",
+    "_meta": {
+      "title": "Load Upscale Model"
+    }
+  },
+  "3": {
+    "inputs": {
+      "upscale_model": ["2", 0],
+      "image": ["1", 0]
+    },
+    "class_type": "ImageUpscaleWithModel",
+    "_meta": {
+      "title": "Upscale Batch"
+    }
+  },
+  "4": {
+    "inputs": {
+      "upscale_method": "lanczos",
+      "width": 1920,
+      "height": 1080,
+      "crop": "center",
+      "image": ["3", 0]
+    },
+    "class_type": "ImageScale",
+    "_meta": {
+      "title": "Resize To Delivery Resolution"
+    }
+  },
+  "5": {
+    "inputs": {
+      "images": ["4", 0],
+      "filename_prefix": "PLACEHOLDER_PREFIX"
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Upscaled Batch"
+    }
+  }
+}
