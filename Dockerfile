@@ -63,6 +63,23 @@ RUN set -eu; \
 RUN mkdir -p /ComfyUI/custom_nodes/ComfyUI-Frame-Interpolation/ckpts/rife && \
     wget -q https://huggingface.co/hfmaster/models-moved/resolve/cab6dcee2fbb05e190dbb8f536fbdaa489031a14/rife/rife49.pth -O /ComfyUI/custom_nodes/ComfyUI-Frame-Interpolation/ckpts/rife/rife49.pth
 
+RUN set -eu; \
+    mkdir -p /ComfyUI/models/upscale_models; \
+    download() { \
+        url="$1"; output="$2"; attempt=1; \
+        until wget -c --no-verbose --tries=1 --timeout=60 "$url" -O "$output"; do \
+            if [ "$attempt" -ge 5 ]; then \
+                echo "Download failed after 5 attempts: $url"; \
+                return 1; \
+            fi; \
+            delay=$((attempt * 10)); \
+            echo "Download attempt $attempt failed; retrying in ${delay}s: $url"; \
+            sleep "$delay"; \
+            attempt=$((attempt + 1)); \
+        done; \
+    }; \
+    download https://huggingface.co/lokCX/4x-Ultrasharp/resolve/main/4x-UltraSharp.pth /ComfyUI/models/upscale_models/4x-UltraSharp.pth
+
 COPY . .
 RUN mkdir -p /ComfyUI/user/default/ComfyUI-Manager
 COPY config.ini /ComfyUI/user/default/ComfyUI-Manager/config.ini

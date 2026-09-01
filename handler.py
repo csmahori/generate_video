@@ -455,8 +455,9 @@ def handler(job):
     length = job_input.get("length", 81)
 
     # 해상도(폭/높이) 16배수 보정
-    original_width = job_input.get("width", 480)
-    original_height = job_input.get("height", 720)
+    # Defaults are landscape 16:9 (YouTube long-form target, not portrait/Shorts)
+    original_width = job_input.get("width", 832)
+    original_height = job_input.get("height", 480)
     adjusted_width = to_nearest_multiple_of_16(original_width)
     adjusted_height = to_nearest_multiple_of_16(original_height)
     if adjusted_width != original_width:

@@ -37,7 +37,7 @@
     },
     "class_type": "VAELoader",
     "_meta": {
-      "title": "VAE 로드"
+      "title": "VAE \ub85c\ub4dc"
     }
   },
   "228": {
@@ -48,7 +48,7 @@
     },
     "class_type": "CLIPLoader",
     "_meta": {
-      "title": "CLIP 로드"
+      "title": "CLIP \ub85c\ub4dc"
     }
   },
   "230": {
@@ -58,7 +58,7 @@
     },
     "class_type": "UNETLoader",
     "_meta": {
-      "title": "확산 모델 로드"
+      "title": "\ud655\uc0b0 \ubaa8\ub378 \ub85c\ub4dc"
     }
   },
   "235": {
@@ -68,7 +68,7 @@
     },
     "class_type": "UNETLoader",
     "_meta": {
-      "title": "확산 모델 로드"
+      "title": "\ud655\uc0b0 \ubaa8\ub378 \ub85c\ub4dc"
     }
   },
   "246": {
@@ -95,7 +95,7 @@
     },
     "class_type": "LoadImage",
     "_meta": {
-      "title": "이미지 로드"
+      "title": "\uc774\ubbf8\uc9c0 \ub85c\ub4dc"
     }
   },
   "277": {
@@ -117,7 +117,7 @@
     },
     "class_type": "VHS_VideoCombine",
     "_meta": {
-      "title": "Video Combine 🎥🅥🅗🅢"
+      "title": "Video Combine \ud83c\udfa5\ud83c\udd65\ud83c\udd57\ud83c\udd62"
     }
   },
   "282": {
@@ -131,7 +131,7 @@
     },
     "class_type": "LoraLoaderModelOnly",
     "_meta": {
-      "title": "LoRA 로드 (모델 전용)"
+      "title": "LoRA \ub85c\ub4dc (\ubaa8\ub378 \uc804\uc6a9)"
     }
   },
   "283": {
@@ -145,7 +145,7 @@
     },
     "class_type": "LoraLoaderModelOnly",
     "_meta": {
-      "title": "LoRA 로드 (모델 전용)"
+      "title": "LoRA \ub85c\ub4dc (\ubaa8\ub378 \uc804\uc6a9)"
     }
   },
   "284": {
@@ -159,7 +159,7 @@
     },
     "class_type": "LoraLoaderModelOnly",
     "_meta": {
-      "title": "LoRA 로드 (모델 전용)"
+      "title": "LoRA \ub85c\ub4dc (\ubaa8\ub378 \uc804\uc6a9)"
     }
   },
   "288": {
@@ -199,7 +199,7 @@
     },
     "class_type": "VAEDecode",
     "_meta": {
-      "title": "VAE 디코드"
+      "title": "VAE \ub514\ucf54\ub4dc"
     }
   },
   "336": {
@@ -213,7 +213,7 @@
     },
     "class_type": "LoraLoaderModelOnly",
     "_meta": {
-      "title": "LoRA 로드 (모델 전용)"
+      "title": "LoRA \ub85c\ub4dc (\ubaa8\ub378 \uc804\uc6a9)"
     }
   },
   "362": {
@@ -226,7 +226,7 @@
     },
     "class_type": "ModelSamplingSD3",
     "_meta": {
-      "title": "모델 샘플링 (SD3)"
+      "title": "\ubaa8\ub378 \uc0d8\ud50c\ub9c1 (SD3)"
     }
   },
   "363": {
@@ -239,7 +239,7 @@
     },
     "class_type": "ModelSamplingSD3",
     "_meta": {
-      "title": "모델 샘플링 (SD3)"
+      "title": "\ubaa8\ub378 \uc0d8\ud50c\ub9c1 (SD3)"
     }
   },
   "377": {
@@ -367,7 +367,7 @@
     },
     "class_type": "WanFirstLastFrameToVideo",
     "_meta": {
-      "title": "WAN 비디오 생성 (시작-끝 프레임)"
+      "title": "WAN \ube44\ub514\uc624 \uc0dd\uc131 (\uc2dc\uc791-\ub05d \ud504\ub808\uc784)"
     }
   },
   "482": {
@@ -379,7 +379,7 @@
       "ensemble": true,
       "scale_factor": 4,
       "frames": [
-        "323",
+        "902",
         0
       ],
       "dtype": "float32",
@@ -427,7 +427,7 @@
     "inputs": {},
     "class_type": "DisableNoise",
     "_meta": {
-      "title": "노이즈 비활성화"
+      "title": "\ub178\uc774\uc988 \ube44\ud65c\uc131\ud654"
     }
   },
   "829": {
@@ -440,7 +440,7 @@
     },
     "class_type": "SplitSigmas",
     "_meta": {
-      "title": "시그마 배열 분할 (스텝)"
+      "title": "\uc2dc\uadf8\ub9c8 \ubc30\uc5f4 \ubd84\ud560 (\uc2a4\ud15d)"
     }
   },
   "830": {
@@ -472,7 +472,7 @@
     },
     "class_type": "KSamplerSelect",
     "_meta": {
-      "title": "KSampler (선택)"
+      "title": "KSampler (\uc120\ud0dd)"
     }
   },
   "832": {
@@ -516,7 +516,7 @@
     },
     "class_type": "BasicGuider",
     "_meta": {
-      "title": "기본 가이드"
+      "title": "\uae30\ubcf8 \uac00\uc774\ub4dc"
     }
   },
   "834": {
@@ -531,7 +531,7 @@
     },
     "class_type": "BetaSamplingScheduler",
     "_meta": {
-      "title": "베타 샘플링 스케줄러"
+      "title": "\ubca0\ud0c0 \uc0d8\ud50c\ub9c1 \uc2a4\ucf00\uc904\ub7ec"
     }
   },
   "835": {
@@ -540,7 +540,7 @@
     },
     "class_type": "RandomNoise",
     "_meta": {
-      "title": "무작위 노이즈"
+      "title": "\ubb34\uc791\uc704 \ub178\uc774\uc988"
     }
   },
   "836": {
@@ -585,7 +585,7 @@
     },
     "class_type": "ImageScaleBy",
     "_meta": {
-      "title": "이미지 확대 비율"
+      "title": "\uc774\ubbf8\uc9c0 \ud655\ub300 \ube44\uc728"
     }
   },
   "838": {
@@ -611,7 +611,7 @@
     },
     "class_type": "ImageScaleBy",
     "_meta": {
-      "title": "이미지 확대 비율"
+      "title": "\uc774\ubbf8\uc9c0 \ud655\ub300 \ube44\uc728"
     }
   },
   "840": {
@@ -638,7 +638,7 @@
     },
     "class_type": "EmptyImage",
     "_meta": {
-      "title": "빈 이미지"
+      "title": "\ube48 \uc774\ubbf8\uc9c0"
     }
   },
   "842": {
@@ -655,7 +655,7 @@
     },
     "class_type": "ImageScaleBy",
     "_meta": {
-      "title": "이미지 확대 비율"
+      "title": "\uc774\ubbf8\uc9c0 \ud655\ub300 \ube44\uc728"
     }
   },
   "843": {
@@ -667,7 +667,7 @@
     },
     "class_type": "GetImageSize",
     "_meta": {
-      "title": "이미지 크기 가져오기"
+      "title": "\uc774\ubbf8\uc9c0 \ud06c\uae30 \uac00\uc838\uc624\uae30"
     }
   },
   "845": {
@@ -679,7 +679,7 @@
     },
     "class_type": "GetImageSize",
     "_meta": {
-      "title": "이미지 크기 가져오기"
+      "title": "\uc774\ubbf8\uc9c0 \ud06c\uae30 \uac00\uc838\uc624\uae30"
     }
   },
   "846": {
@@ -738,6 +738,47 @@
     "class_type": "PrimitiveFloat",
     "_meta": {
       "title": "Scale Factor"
+    }
+  },
+  "900": {
+    "inputs": {
+      "model_name": "4x-UltraSharp.pth"
+    },
+    "class_type": "UpscaleModelLoader",
+    "_meta": {
+      "title": "Load Upscale Model - Final"
+    }
+  },
+  "901": {
+    "inputs": {
+      "upscale_model": [
+        "900",
+        0
+      ],
+      "image": [
+        "323",
+        0
+      ]
+    },
+    "class_type": "ImageUpscaleWithModel",
+    "_meta": {
+      "title": "Upscale Image (Model) - Final"
+    }
+  },
+  "902": {
+    "inputs": {
+      "upscale_method": "lanczos",
+      "width": 1920,
+      "height": 1080,
+      "crop": "center",
+      "image": [
+        "901",
+        0
+      ]
+    },
+    "class_type": "ImageScale",
+    "_meta": {
+      "title": "Resize To Delivery Resolution - Final"
     }
   }
 }
