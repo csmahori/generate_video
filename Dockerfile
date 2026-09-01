@@ -46,7 +46,7 @@ RUN git clone --filter=blob:none --no-checkout https://github.com/ssitu/ComfyUI_
     git submodule update --init --recursive
 
 RUN set -eu; \
-    mkdir -p /ComfyUI/models/text_encoders /ComfyUI/models/vae /ComfyUI/models/diffusion_models /ComfyUI/models/loras; \
+    mkdir -p /ComfyUI/models/text_encoders /ComfyUI/models/vae /ComfyUI/models/diffusion_models /ComfyUI/models/loras /ComfyUI/models/checkpoints; \
     download() { \
         url="$1"; output="$2"; attempt=1; \
         until wget -c --no-verbose --tries=1 --timeout=60 "$url" -O "$output"; do \
@@ -60,6 +60,7 @@ RUN set -eu; \
             attempt=$((attempt + 1)); \
         done; \
     }; \
+    download https://huggingface.co/stable-diffusion-v1-5/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly-fp16.safetensors /ComfyUI/models/checkpoints/v1-5-pruned-emaonly-fp16.safetensors & pid_ckpt=$!; \
     download https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/diffusion_models/wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors /ComfyUI/models/diffusion_models/wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors & pid_one=$!; \
     download https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/diffusion_models/wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors /ComfyUI/models/diffusion_models/wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors & pid_two=$!; \
     wait "$pid_one"; wait "$pid_two"; \
@@ -68,7 +69,8 @@ RUN set -eu; \
     wait "$pid_one"; wait "$pid_two"; \
     download https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/loras/wan2.2_i2v_lightx2v_4steps_lora_v1_high_noise.safetensors /ComfyUI/models/loras/wan2.2_i2v_lightx2v_4steps_lora_v1_high_noise.safetensors & pid_one=$!; \
     download https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/loras/wan2.2_i2v_lightx2v_4steps_lora_v1_low_noise.safetensors /ComfyUI/models/loras/wan2.2_i2v_lightx2v_4steps_lora_v1_low_noise.safetensors & pid_two=$!; \
-    wait "$pid_one"; wait "$pid_two"
+    wait "$pid_one"; wait "$pid_two"; \
+    wait "$pid_ckpt"
 RUN mkdir -p /ComfyUI/custom_nodes/ComfyUI-Frame-Interpolation/ckpts/rife && \
     wget -q https://huggingface.co/hfmaster/models-moved/resolve/cab6dcee2fbb05e190dbb8f536fbdaa489031a14/rife/rife49.pth -O /ComfyUI/custom_nodes/ComfyUI-Frame-Interpolation/ckpts/rife/rife49.pth
 
@@ -88,26 +90,6 @@ RUN set -eu; \
         done; \
     }; \
     download https://huggingface.co/lokCX/4x-Ultrasharp/resolve/main/4x-UltraSharp.pth /ComfyUI/models/upscale_models/4x-UltraSharp.pth
-
-# Base SD1.5 checkpoint used only as the tile-diffusion refiner in stage2's
-# Ultimate SD Upscale (No Upscale) pass -- operates on already-decoded 2D
-# frames at a low denoise (0.15-0.22), not part of the Wan2.2 generation graph.
-RUN set -eu; \
-    mkdir -p /ComfyUI/models/checkpoints; \
-    download() { \
-        url="$1"; output="$2"; attempt=1; \
-        until wget -c --no-verbose --tries=1 --timeout=60 "$url" -O "$output"; do \
-            if [ "$attempt" -ge 5 ]; then \
-                echo "Download failed after 5 attempts: $url"; \
-                return 1; \
-            fi; \
-            delay=$((attempt * 10)); \
-            echo "Download attempt $attempt failed; retrying in ${delay}s: $url"; \
-            sleep "$delay"; \
-            attempt=$((attempt + 1)); \
-        done; \
-    }; \
-    download https://huggingface.co/stable-diffusion-v1-5/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.safetensors /ComfyUI/models/checkpoints/v1-5-pruned-emaonly.safetensors
 
 COPY . .
 RUN mkdir -p /ComfyUI/user/default/ComfyUI-Manager
