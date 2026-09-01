@@ -367,7 +367,7 @@
     "inputs": {
       "sage_attention": "sageattn_qk_int8_pv_fp8_cuda++",
       "model": [
-        "391",
+        "340",
         0
       ]
     },
@@ -380,7 +380,7 @@
     "inputs": {
       "sage_attention": "sageattn_qk_int8_pv_fp8_cuda++",
       "model": [
-        "390",
+        "286",
         0
       ]
     },
