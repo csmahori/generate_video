@@ -111,7 +111,7 @@
       "pingpong": false,
       "save_output": true,
       "images": [
-        "482",
+        "902",
         0
       ]
     },
@@ -463,7 +463,7 @@
       "ensemble": true,
       "scale_factor": 4,
       "frames": [
-        "902",
+        "323",
         0
       ],
       "dtype": "float32",
@@ -840,7 +840,7 @@
         0
       ],
       "image": [
-        "323",
+        "482",
         0
       ]
     },
