@@ -6,6 +6,7 @@ ARG MANAGER_COMMIT=f39cbd56fecae0b27a446c0cd450cd591f3a8bea
 ARG KJNODES_COMMIT=3f20054214fec9f9234fd3841ae6f1e4287948f6
 ARG VFI_COMMIT=26545cc2dd95bc3d27f056016300673bdeee78f5
 ARG VHS_COMMIT=115de7a9d9e34410cffb9ecfd268e993b11a50fb
+ARG USDU_COMMIT=a5547db9e1d07d3318bb21e9e9c474f4c1e9c8df
 
 RUN pip install --no-cache-dir runpod==1.7.13 websocket-client==1.8.0
 
@@ -35,6 +36,14 @@ RUN git clone --filter=blob:none --no-checkout https://github.com/Kosinkadink/Co
     cd /ComfyUI/custom_nodes/ComfyUI-VideoHelperSuite && \
     git checkout "${VHS_COMMIT}" && \
     pip install --no-cache-dir -r requirements.txt
+
+# Ultimate SD Upscale: tile-based diffusion refiner used as a bounded, low-denoise
+# face/detail pass after the ESRGAN upscale (stage2). No extra Python deps beyond
+# what ComfyUI core already installs; pulls its own vendored script via submodule.
+RUN git clone --filter=blob:none --no-checkout https://github.com/ssitu/ComfyUI_UltimateSDUpscale.git /ComfyUI/custom_nodes/ComfyUI_UltimateSDUpscale && \
+    cd /ComfyUI/custom_nodes/ComfyUI_UltimateSDUpscale && \
+    git checkout "${USDU_COMMIT}" && \
+    git submodule update --init --recursive
 
 RUN set -eu; \
     mkdir -p /ComfyUI/models/text_encoders /ComfyUI/models/vae /ComfyUI/models/diffusion_models /ComfyUI/models/loras; \
@@ -79,6 +88,26 @@ RUN set -eu; \
         done; \
     }; \
     download https://huggingface.co/lokCX/4x-Ultrasharp/resolve/main/4x-UltraSharp.pth /ComfyUI/models/upscale_models/4x-UltraSharp.pth
+
+# Base SD1.5 checkpoint used only as the tile-diffusion refiner in stage2's
+# Ultimate SD Upscale (No Upscale) pass -- operates on already-decoded 2D
+# frames at a low denoise (0.15-0.22), not part of the Wan2.2 generation graph.
+RUN set -eu; \
+    mkdir -p /ComfyUI/models/checkpoints; \
+    download() { \
+        url="$1"; output="$2"; attempt=1; \
+        until wget -c --no-verbose --tries=1 --timeout=60 "$url" -O "$output"; do \
+            if [ "$attempt" -ge 5 ]; then \
+                echo "Download failed after 5 attempts: $url"; \
+                return 1; \
+            fi; \
+            delay=$((attempt * 10)); \
+            echo "Download attempt $attempt failed; retrying in ${delay}s: $url"; \
+            sleep "$delay"; \
+            attempt=$((attempt + 1)); \
+        done; \
+    }; \
+    download https://huggingface.co/stable-diffusion-v1-5/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.safetensors /ComfyUI/models/checkpoints/v1-5-pruned-emaonly.safetensors
 
 COPY . .
 RUN mkdir -p /ComfyUI/user/default/ComfyUI-Manager

@@ -43,14 +43,75 @@
       "title": "Resize To Delivery Resolution"
     }
   },
+  "6": {
+    "inputs": {
+      "ckpt_name": "v1-5-pruned-emaonly.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple",
+    "_meta": {
+      "title": "Load Refiner Checkpoint (SD1.5)"
+    }
+  },
+  "7": {
+    "inputs": {
+      "text": "detailed face, sharp facial features, clear eyes, natural skin texture, high quality, intricate details",
+      "clip": ["6", 1]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Refine Positive Prompt"
+    }
+  },
+  "8": {
+    "inputs": {
+      "text": "blurry, smudged, distorted face, deformed, low quality, artifacts, extra features, mutated",
+      "clip": ["6", 1]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Refine Negative Prompt"
+    }
+  },
+  "9": {
+    "inputs": {
+      "upscaled_image": ["4", 0],
+      "model": ["6", 0],
+      "positive": ["7", 0],
+      "negative": ["8", 0],
+      "vae": ["6", 2],
+      "seed": 321357703527025,
+      "steps": 20,
+      "cfg": 6.0,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": 0.2,
+      "mode_type": "Chess",
+      "tile_width": 640,
+      "tile_height": 640,
+      "mask_blur": 8,
+      "tile_padding": 32,
+      "seam_fix_mode": "None",
+      "seam_fix_denoise": 1.0,
+      "seam_fix_width": 64,
+      "seam_fix_mask_blur": 8,
+      "seam_fix_padding": 16,
+      "force_uniform_tiles": true,
+      "tiled_decode": false,
+      "batch_size": 1
+    },
+    "class_type": "UltimateSDUpscaleNoUpscale",
+    "_meta": {
+      "title": "Tile-Diffusion Face/Detail Refine"
+    }
+  },
   "5": {
     "inputs": {
-      "images": ["4", 0],
+      "images": ["9", 0],
       "filename_prefix": "PLACEHOLDER_PREFIX"
     },
     "class_type": "SaveImage",
     "_meta": {
-      "title": "Save Upscaled Batch"
+      "title": "Save Refined Batch"
     }
   }
 }
