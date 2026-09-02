@@ -4,8 +4,18 @@
 set -e
 
 # Start ComfyUI in the background
+# --cache-none (2026-09-02, stage2 OOM fix): disables ComfyUI's node-output
+# caching entirely, at the cost of re-executing every node on each run
+# instead of reusing cached results. This is the platform-documented fix for
+# the stage2 host-RAM OOM we diagnosed (node outputs -- including from
+# custom nodes like the RIFE interpolation and ESRGAN upscale nodes this
+# pipeline uses -- accumulating in host RAM across sequential batched
+# executions within the same long-running ComfyUI process). The handler's
+# own free_comfy_memory() /free call after each stage2 batch stays in place
+# as a harmless extra safety net, but --cache-none is the real fix since
+# /free is not guaranteed to fully clear custom-node caches.
 echo "Starting ComfyUI in the background..."
-python /ComfyUI/main.py --listen --use-sage-attention &
+python /ComfyUI/main.py --listen --use-sage-attention --cache-none &
 
 # Wait for ComfyUI to be ready
 echo "Waiting for ComfyUI to be ready..."
