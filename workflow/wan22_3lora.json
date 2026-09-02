@@ -479,7 +479,7 @@
   },
   "830": {
     "inputs": {
-      "cfg": 4,
+      "cfg": 3.5,
       "start_percent": 0,
       "end_percent": 0.33,
       "model": [
