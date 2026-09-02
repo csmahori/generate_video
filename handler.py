@@ -155,6 +155,33 @@ def queue_prompt(prompt):
         logger.error(f"ComfyUI workflow validation failed: {error_body}")
         raise Exception(f"ComfyUI workflow validation failed: {error_body}") from e
 
+def free_comfy_memory(unload_models=True, free_memory=True):
+    """POST to ComfyUI's /free endpoint to release cached node outputs and
+    optionally unload models from VRAM.
+    PATCHED (2026-09-02, stage2 OOM fix): stage 2 submits many small
+    batches (STAGE2_BATCH_SIZE frames each) to the same long-running
+    ComfyUI process. ComfyUI caches node outputs by default to speed up
+    repeated executions within a session, so without an explicit free
+    between batches those cached tensors accumulate in host RAM across
+    every batch -- the per-batch memory bound run_stage2() is meant to
+    provide never actually applies at the ComfyUI-process level. This was
+    confirmed reproducibly: two full 81-frame (161-post-RIFE) runs both
+    climbed host RAM from ~45GB to ~51-53GB over stage 2 and got
+    container-OOM-killed by RunPod partway through (surfacing as a
+    misleading WebSocketConnectionClosedException, since the handler is
+    blocked on ws.recv() when the container dies). Calling /free after
+    each batch forces ComfyUI to drop that cache so peak memory actually
+    stays bounded by one batch, regardless of clip length."""
+    url = f"http://{server_address}:8188/free"
+    data = json.dumps({"unload_models": unload_models, "free_memory": free_memory}).encode('utf-8')
+    req = urllib.request.Request(url, data=data, method='POST')
+    try:
+        urllib.request.urlopen(req)
+    except Exception as e:
+        # Non-fatal: worst case we're back to the old (bounded-but-leaky)
+        # behavior for this one batch rather than failing the whole job.
+        logger.warning(f"Failed to free ComfyUI memory between stage 2 batches: {e}")
+
 def get_image(filename, subfolder, folder_type):
     url = f"http://{server_address}:8188/view"
     logger.info(f"Getting image from: {url}")
@@ -265,6 +292,11 @@ def run_stage2(ws, stage1_dir, frame_count, task_id):
         if not saved:
             raise Exception(f"Stage 2 batch {i+1}/{num_batches} produced no output frames")
         stage2_dir = _resolve_saved_dir(saved[0])
+
+        # See free_comfy_memory() docstring: without this, ComfyUI's node
+        # cache accumulates host RAM across batches and OOM-kills the
+        # container partway through longer clips.
+        free_comfy_memory()
 
     logger.info(f"Stage 2 complete: {frame_count} upscaled frames in {stage2_dir}")
     return stage2_dir, prefix_name
