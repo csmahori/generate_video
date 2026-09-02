@@ -106,7 +106,7 @@
   },
   "5": {
     "inputs": {
-      "images": ["9", 0],
+      "images": ["4", 0],
       "filename_prefix": "PLACEHOLDER_PREFIX"
     },
     "class_type": "SaveImage",
