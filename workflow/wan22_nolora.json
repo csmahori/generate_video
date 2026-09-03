@@ -192,33 +192,6 @@
       "title": "\ubaa8\ub378 \uc0d8\ud50c\ub9c1 (SD3)"
     }
   },
-  "377": {
-    "inputs": {
-      "empty_cache": true,
-      "gc_collect": true,
-      "unload_all_models": true,
-      "any_input": [
-        "277",
-        0
-      ]
-    },
-    "class_type": "VRAM_Debug",
-    "_meta": {
-      "title": "VRAM Debug"
-    }
-  },
-  "378": {
-    "inputs": {
-      "any_input": [
-        "377",
-        0
-      ]
-    },
-    "class_type": "DummyOut",
-    "_meta": {
-      "title": "Dummy Out"
-    }
-  },
   "390": {
     "inputs": {
       "backend": "inductor",
