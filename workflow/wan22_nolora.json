@@ -98,28 +98,6 @@
       "title": "\uc774\ubbf8\uc9c0 \ub85c\ub4dc"
     }
   },
-  "277": {
-    "inputs": {
-      "frame_rate": 32,
-      "loop_count": 0,
-      "filename_prefix": "stage1_frames/PLACEHOLDER/video",
-      "format": "video/h264-mp4",
-      "pix_fmt": "yuv420p",
-      "crf": 15,
-      "save_metadata": true,
-      "trim_to_audio": true,
-      "pingpong": false,
-      "save_output": true,
-      "images": [
-        "482",
-        0
-      ]
-    },
-    "class_type": "VHS_VideoCombine",
-    "_meta": {
-      "title": "Video Combine 🎥🅥🅗🄢"
-    }
-  },
   "283": {
     "inputs": {
       "lora_name": "wan2.2_i2v_lightx2v_4steps_lora_v1_high_noise.safetensors",
@@ -417,7 +395,7 @@
   },
   "830": {
     "inputs": {
-      "cfg": 4,
+      "cfg": 3.5,
       "start_percent": 0,
       "end_percent": 0.33,
       "model": [

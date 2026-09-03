@@ -41,19 +41,19 @@ client_id = str(uuid.uuid4())
 # encode settings the old VHS_VideoCombine node used: h264, crf 15,
 # yuv420p), instead of doing that inside ComfyUI.
 #
-# PATCHED (2026-09-03, made opt-in): this two-stage upscale+refine pass
-# is NOT part of the pipeline that produced the known-good
-# Scene01_Shot01_Wan22_720p_Test reference (that predates this patch
-# entirely -- see the ksampler branch, commit 48e898e). Running the
-# tile-diffusion refine stage (UltimateSDUpscaleNoUpscale) re-renders each
-# frame semi-independently with no cross-frame conditioning, which is a
-# textbook source of flicker/blur/face-identity drift across a clip.
-# use_stage2_upscale now defaults OFF: the standard path is single-stage
-# again (sampling -> decode -> RIFE -> VHS_VideoCombine, node 277, exactly
-# like the reference), and stage2 is opt-in per job for shots whose length/
-# resolution actually need the memory-bounded batched upscale.
+# PATCHED (2026-09-03, corrected): stage2 was briefly changed to save node
+# 9's output (UltimateSDUpscaleNoUpscale, tile-diffusion refine) instead of
+# node 4's (plain ESRGAN upscale + resize). That refine stage was
+# deliberately bypassed on 2026-09-01 -- see project memory
+# wan22-vs-hunyuanvideo-decision and wan22-runpod-rebuild-status -- because
+# feeding Wan2.2's decoded frames through a generic SD1.5 tile-diffusion
+# pass (built for single-image checkpoints, not this model's I2V
+# conditioning) was judged too high-risk/untested, and re-rendering each
+# frame semi-independently with no cross-frame conditioning is a textbook
+# source of flicker/blur/face-identity drift across a clip. stage2_upscale
+# .json node 5 now saves node 4's output again, restoring the confirmed-
+# good recipe (81-frame test, image 88d9a65a3, endpoint v22, COMPLETED).
 STAGE1_SAVE_NODE = "960"
-SINGLE_STAGE_VIDEO_NODE = "277"
 STAGE2_LOAD_NODE = "1"
 STAGE2_SAVE_NODE = "5"
 STAGE2_BATCH_SIZE = 20
@@ -724,31 +724,20 @@ def handler(job):
                 raise Exception("웹소켓 연결 시간 초과 (3분)")
             time.sleep(5)
 
-    use_stage2_upscale = bool(job_input.get("use_stage2_upscale", False))
-
     stage1_dir = None
     stage2_dir = None
-    if workflow_override is not None:
-        # Custom workflow supplied by the caller -- node IDs 482/901/960/etc
-        # aren't guaranteed to exist or mean the same thing, so fall back to
-        # the original single-submission behavior rather than guessing.
-        videos = get_videos(ws, prompt)
-        ws.close()
-    elif use_stage2_upscale:
-        # Opt-in: memory-bounded two-stage pipeline (see module docstring
-        # above) for shots whose length/resolution don't fit one pass.
-        prompt.pop(SINGLE_STAGE_VIDEO_NODE, None)
+    if workflow_override is None:
+        # Standard path: our own known-node-ID templates. Use the
+        # memory-bounded two-stage pipeline (see module docstring above).
         stage1_dir, frame_count = run_stage1(ws, prompt, task_id)
         stage2_dir, prefix_name = run_stage2(ws, stage1_dir, frame_count, task_id)
         ws.close()
         final_video_path = assemble_video_ffmpeg(stage2_dir, prefix_name, task_id)
         videos = {"final": [final_video_path]}
     else:
-        # Default: single-stage direct render, matching the known-good
-        # Scene01_Shot01_Wan22_720p_Test setup -- sampling -> RIFE ->
-        # VHS_VideoCombine (node 277) assembles the final mp4 inside the
-        # ComfyUI graph itself, no separate upscale/refine pass.
-        prompt.pop(STAGE1_SAVE_NODE, None)
+        # Custom workflow supplied by the caller -- node IDs 482/901/960/etc
+        # aren't guaranteed to exist or mean the same thing, so fall back to
+        # the original single-submission behavior rather than guessing.
         videos = get_videos(ws, prompt)
         ws.close()
 
